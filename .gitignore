@@ -43,3 +43,10 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+/.github
+/github
+/.cursor
+/cursor
+/long_term
+/memory_bank
