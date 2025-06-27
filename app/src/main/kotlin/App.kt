@@ -29,6 +29,9 @@ fun main() {
     typeInferenceExample()
     stringTemplateExample()
     coroutinesExample()
+
+    // Ví dụ về Generics Variance (in và out)
+    runGenericVarianceExamples()
 }
 
 /**
