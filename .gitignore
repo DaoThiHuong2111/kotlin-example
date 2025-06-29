@@ -50,5 +50,9 @@ bin/
 /cursor
 /long_term
 /memory_bank
+/.idea/.name
+/.idea/AugmentWebviewStateStore.xml
+/.idea/git_toolbox_prj.xml
+/.idea/vcs.xml
 /.idea/vcs.xml
 /.idea
