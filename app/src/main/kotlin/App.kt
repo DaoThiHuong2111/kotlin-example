@@ -1,334 +1,292 @@
 package org.example.app
 
-import org.example.utils.Printer
+import kotlin.system.measureTimeMillis
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-import kotlinx.serialization.*
-import kotlinx.serialization.json.*
-import kotlin.time.*
-import kotlin.time.Duration.Companion.seconds
 
 /**
- * Ví dụ về các tính năng mới từ Kotlin 1.8 đến 2.1.21
+ * Main application - chạy ví dụ về Inline Keywords
  */
 fun main() {
-    println("Các tính năng mới từ Kotlin 1.8 đến 2.1.21")
+    // Import và gọi các functions từ InlineKeywordsExample
+    println("🎉 === KOTLIN INLINE KEYWORDS DEMO ===\n")
 
-    // Sử dụng Printer từ utils
-    val printer = Printer("Hello from Kotlin 2.1.20!")
-    printer.printMessage()
-
-    // Gọi các hàm ví dụ
-    valueClassExample()
-    sealedInterfaceExample()
-    contextReceiversExample()
-    durationExample()
-    optInExample()
-    explicitBackingFieldExample()
-    rangesExample()
-    typeInferenceExample()
-    stringTemplateExample()
-    coroutinesExample()
-
-    // Ví dụ về Generics Variance (in và out)
-    runGenericVarianceExamples()
-}
-
-/**
- * 1. Value Classes (Kotlin 1.8+)
- * 
- * Value classes là một tính năng cho phép tạo wrapper cho một giá trị đơn mà không tạo ra
- * chi phí runtime bổ sung. Chúng được biên dịch thành kiểu cơ bản trong hầu hết các trường hợp.
- * 
- * Trong Kotlin 1.8+, value classes đã được cải thiện và ổn định hơn, thay thế cho inline classes.
- */
-@JvmInline
-value class UserId(val id: Int)
-
-fun valueClassExample() {
-    println("\n--- Value Classes Example ---")
-
-    // Sử dụng value class
-    val userId = UserId(123)
-    println("User ID: ${userId.id}")
-
-    // Value class được biên dịch thành kiểu cơ bản (Int) trong hầu hết các trường hợp
-    // nên không tạo ra chi phí runtime bổ sung
-}
-
-/**
- * 2. Sealed Interfaces (Kotlin 1.8+)
- * 
- * Sealed interfaces cho phép tạo ra các hierarchy kín, tương tự như sealed classes.
- * Điều này giúp kiểm soát tốt hơn các kiểu có thể implement interface.
- */
-sealed interface Result<out T> {
-    data class Success<T>(val data: T) : Result<T>
-    data class Error(val message: String) : Result<Nothing>
-    data object Loading : Result<Nothing>
-}
-
-fun sealedInterfaceExample() {
-    println("\n--- Sealed Interface Example ---")
-
-    // Sử dụng sealed interface
-    val result: Result<String> = Result.Success("Data loaded successfully")
-
-    // Khi sử dụng when với sealed interface, compiler đảm bảo tất cả các trường hợp được xử lý
-    val message = when (result) {
-        is Result.Success -> "Success: ${result.data}"
-        is Result.Error -> "Error: ${result.message}"
-        is Result.Loading -> "Loading..."
+    // 1. Inline function cơ bản
+    println("1️⃣ Inline Function:")
+    executeWithLog {
+        println("   📝 Thực hiện task quan trọng")
     }
 
-    println(message)
-}
+    // 2. Mixed inline/noinline
+    println("\n2️⃣ Mixed Inline/Noinline:")
+    processData(
+        data = "Hello Kotlin",
+        inlineProcessor = { it.uppercase() },
+        callback = { result -> println("   📢 Callback: $result") }
+    )
 
-/**
- * 3. Context Receivers (Kotlin 1.8+)
- * 
- * Context receivers là một tính năng mới cho phép một hàm hoặc thuộc tính
- * nhận nhiều receivers. Điều này mở rộng khả năng của extension functions.
- */
-// Định nghĩa các context classes
-class Logger {
-    fun log(message: String) {
-        println("LOG: $message")
+    // 3. Crossinline
+    println("\n3️⃣ Crossinline:")
+    executeWithDelay(500) {
+        println("   ⏰ Delayed execution hoàn thành!")
     }
-}
 
-class Database {
-    fun query(sql: String): String {
-        return "Result of: $sql"
-    }
-}
-
-// Sử dụng context receivers
-context(Logger, Database)
-fun executeAndLog(sql: String) {
-    log("Executing query: $sql")
-    val result = query(sql)
-    log("Query result: $result")
-}
-
-fun contextReceiversExample() {
-    println("\n--- Context Receivers Example ---")
-
-    val logger = Logger()
-    val database = Database()
-
-    // Sử dụng with để cung cấp các context receivers
-    with(logger) {
-        with(database) {
-            executeAndLog("SELECT * FROM users")
+    // 4. HTML DSL
+    println("\n4️⃣ HTML DSL:")
+    val htmlContent = html {
+        head {
+            title("My Kotlin App")
+        }
+        body {
+            h1("Welcome!")
+            p("Đây là ví dụ về inline functions trong Kotlin")
         }
     }
+    println("   🌐 HTML: $htmlContent")
+
+    // 5. Transaction
+    println("\n5️⃣ Transaction:")
+    try {
+        val result = transaction {
+            println("   💾 Thực hiện database operations...")
+            "Data saved successfully"
+        }
+        println("   ✅ Kết quả: $result")
+    } catch (e: Exception) {
+        println("   ❌ Transaction failed: ${e.message}")
+    }
+
+    // 6. Retry mechanism
+    println("\n6️⃣ Retry Mechanism:")
+    try {
+        var attemptCount = 0
+        val result = retry(
+            maxAttempts = 3,
+            onError = { error, attempt ->
+                println("   ⚠️ Lỗi lần $attempt: ${error.message}")
+            }
+        ) {
+            attemptCount++
+            if (attemptCount <= 1) { // Sửa condition để tránh warning
+                throw RuntimeException("Simulated failure")
+            }
+            "Success after retry!"
+        }
+        println("   🎉 Kết quả: $result")
+    } catch (e: Exception) {
+        println("   💥 Tất cả attempts đều thất bại: ${e.message}")
+    }
+
+    // 7. Performance measurement
+    println("\n7️⃣ Performance Measurement:")
+    val result = measureTime("Complex calculation") {
+        Thread.sleep(200)
+        (1..1000).sum()
+    }
+    println("   🔢 Kết quả tính toán: $result")
+
+    // 8. Validation
+    println("\n8️⃣ Validation Chain:")
+    val email = "user@example.com"
+    val isValid = validate(
+        email,
+        { it.contains("@") },
+        { it.length > 5 },
+        { it.endsWith(".com") }
+    ) { error -> println("   ❌ Validation lỗi: $error") }
+    println("   ${if (isValid) "✅" else "❌"} Email valid: $isValid")
+
+    // 9. Performance comparison
+    performanceDemo()
+
+    // 10. Return behavior
+    returnBehaviorDemo()
 }
 
-/**
- * 4. Duration API Improvements (Kotlin 1.8+)
- * 
- * Kotlin 1.8+ đã cải thiện API Duration, làm cho việc làm việc với thời gian dễ dàng hơn.
- */
-fun durationExample() {
-    println("\n--- Duration API Example ---")
+// Inline functions
+inline fun executeWithLog(action: () -> Unit) {
+    println("🔧 Bắt đầu thực hiện...")
+    action()
+    println("✅ Hoàn thành!")
+}
 
-    // Tạo Duration bằng cách sử dụng extension properties
-    val fiveSeconds = 5.seconds
-    println("Five seconds: $fiveSeconds")
+fun normalFunction(block: () -> Unit) {
+    block()
+}
 
-    // Thực hiện các phép toán với Duration
-    val tenSeconds = fiveSeconds * 2
-    println("Ten seconds: $tenSeconds")
+inline fun inlineFunction(block: () -> Unit) {
+    block()
+}
 
-    // Chuyển đổi giữa các đơn vị thời gian
-    println("Ten seconds in milliseconds: ${tenSeconds.inWholeMilliseconds}")
+inline fun processData(
+    data: String,
+    inlineProcessor: (String) -> String,
+    noinline callback: (String) -> Unit
+) {
+    println("📝 Xử lý dữ liệu: $data")
+    val processed = inlineProcessor(data)
+    println("⚡ Kết quả xử lý: $processed")
+    val storedCallback = callback
+    storedCallback(processed)
+    callback("Xử lý hoàn tất!")
+}
 
-    // Sử dụng Duration với coroutines
-    runBlocking {
-        println("Waiting for 1 second...")
-        delay(1.seconds)
-        println("Done waiting!")
+inline fun executeAsync(crossinline action: () -> Unit) {
+    Thread {
+        println("🧵 Chạy trong thread khác...")
+        action()
+        println("🏁 Thread hoàn thành")
+    }.start()
+}
+
+inline fun executeWithDelay(
+    delayMs: Long,
+    crossinline action: () -> Unit
+) = runBlocking {
+    println("⏳ Đợi ${delayMs}ms...")
+    delay(delayMs)
+    action()
+}
+
+inline fun html(init: HtmlBuilder.() -> Unit): String {
+    val builder = HtmlBuilder()
+    builder.init()
+    return builder.build()
+}
+
+class HtmlBuilder {
+    private val content = StringBuilder()
+
+    fun head(init: () -> Unit) {
+        content.append("<head>")
+        init()
+        content.append("</head>")
+    }
+
+    fun body(init: () -> Unit) {
+        content.append("<body>")
+        init()
+        content.append("</body>")
+    }
+
+    fun title(text: String) {
+        content.append("<title>$text</title>")
+    }
+
+    fun h1(text: String) {
+        content.append("<h1>$text</h1>")
+    }
+
+    fun p(text: String) {
+        content.append("<p>$text</p>")
+    }
+
+    fun build() = content.toString()
+}
+
+inline fun <T> transaction(crossinline block: () -> T): T {
+    println("📊 Bắt đầu transaction...")
+    return try {
+        val result = block()
+        println("💾 Commit transaction")
+        result
+    } catch (e: Exception) {
+        println("🔄 Rollback transaction: ${e.message}")
+        throw e
     }
 }
 
-/**
- * 5. OptIn Annotations (Kotlin 1.8+)
- * 
- * OptIn annotations thay thế cho @Experimental và @UseExperimental,
- * cung cấp cách tốt hơn để làm việc với các API thử nghiệm.
- */
-@RequiresOptIn(message = "This API is experimental. It may be changed in the future without notice.")
-annotation class ExperimentalAPI
+inline fun <T> retry(
+    maxAttempts: Int = 3,
+    crossinline onError: (Exception, Int) -> Unit = { _, _ -> },
+    block: () -> T
+): T {
+    var lastException: Exception? = null
 
-@ExperimentalAPI
-fun experimentalFunction() {
-    println("This is an experimental function")
-}
-
-@OptIn(ExperimentalAPI::class)
-fun optInExample() {
-    println("\n--- OptIn Annotations Example ---")
-
-    // Sử dụng hàm thử nghiệm với @OptIn
-    experimentalFunction()
-}
-
-/**
- * 6. Explicit Backing Fields (Kotlin 2.0)
- * 
- * Kotlin 2.0 giới thiệu khả năng kiểm soát tốt hơn cách lưu trữ dữ liệu
- * thông qua các thuộc tính và backing fields.
- */
-class Person {
-    // Sử dụng backing field thông qua identifier 'field'
-    var name: String = ""
-        set(value) {
-            println("Setting name to: $value")
-            field = value
-        }
-
-    // Property không có backing field
-    var displayName: String
-        get() = name.uppercase()
-        set(value) { name = value.lowercase() }
-}
-
-fun explicitBackingFieldExample() {
-    println("\n--- Explicit Backing Fields Example ---")
-
-    val person = Person()
-    person.name = "John"
-    println("Name: ${person.name}")
-    println("Display name: ${person.displayName}")
-
-    person.displayName = "ALICE"
-    println("After setting display name:")
-    println("Name: ${person.name}")
-    println("Display name: ${person.displayName}")
-}
-
-/**
- * 7. Ranges và Progressions Improvements (Kotlin 1.9+)
- * 
- * Kotlin 1.9+ cải thiện API cho ranges và progressions,
- * làm cho chúng linh hoạt và mạnh mẽ hơn.
- */
-fun rangesExample() {
-    println("\n--- Ranges and Progressions Example ---")
-
-    // Sử dụng ranges với step
-    val range = 1..10 step 2
-    println("Range with step 2: $range")
-    println("Elements: ${range.toList()}")
-
-    // Sử dụng ranges với Char
-    val charRange = 'a'..'z'
-    println("Char range: $charRange")
-    println("Contains 'x': ${'x' in charRange}")
-
-    // Sử dụng downTo
-    val reverseRange = 10 downTo 1 step 3
-    println("Reverse range with step 3: ${reverseRange.toList()}")
-}
-
-/**
- * 8. Improved Type Inference (Kotlin 1.8+)
- * 
- * Kotlin 1.8+ cải thiện type inference, cho phép compiler suy luận
- * kiểu dữ liệu chính xác hơn trong nhiều trường hợp.
- */
-fun <T> identity(value: T): T = value
-
-fun typeInferenceExample() {
-    println("\n--- Improved Type Inference Example ---")
-
-    // Compiler có thể suy luận kiểu dữ liệu chính xác hơn
-    val result = identity("Hello")
-    println("Result type: ${result::class.simpleName}, value: $result")
-
-    // Suy luận kiểu với lambda và SAM conversions
-    val numbers = listOf(1, 2, 3, 4, 5)
-    val evenNumbers = numbers.filter { it % 2 == 0 }
-    println("Even numbers: $evenNumbers")
-
-    // Suy luận kiểu với builder patterns
-    val map = buildMap {
-        put("one", 1)
-        put("two", 2)
-    }
-    println("Map: $map")
-}
-
-/**
- * 9. String Templates Improvements (Kotlin 1.9+)
- * 
- * Kotlin 1.9+ cải thiện string templates, cho phép sử dụng
- * các biểu thức phức tạp hơn trong template.
- */
-fun stringTemplateExample() {
-    println("\n--- String Templates Example ---")
-
-    val name = "Kotlin"
-    val version = "2.1.20"
-
-    // String template cơ bản
-    println("Hello, $name $version!")
-
-    // String template với biểu thức
-    println("Length of name: ${name.length}")
-
-    // String template với biểu thức phức tạp
-    println("Is version greater than 2.0? ${version.split(".").first().toInt() >= 2}")
-
-    // Raw string với templates
-    val code = """
-        fun main() {
-            println("Hello, $name!")
-        }
-    """.trimIndent()
-
-    println("Code snippet:\n$code")
-}
-
-/**
- * 10. Coroutines Improvements (Kotlin 1.8+ to 2.1.21)
- * 
- * Kotlin Coroutines đã được cải thiện đáng kể từ phiên bản 1.8 đến 2.1.21,
- * với nhiều tính năng mới và cải tiến hiệu suất.
- */
-fun coroutinesExample() = runBlocking {
-    println("\n--- Coroutines Improvements Example ---")
-
-    // Flow API improvements
-    val flow = flow {
-        for (i in 1..3) {
-            delay(100)
-            emit(i)
+    repeat(maxAttempts) { attempt ->
+        try {
+            return block()
+        } catch (e: Exception) {
+            lastException = e
+            onError(e, attempt + 1)
+            if (attempt < maxAttempts - 1) {
+                println("🔄 Thử lại lần ${attempt + 2}...")
+                Thread.sleep(100L * (attempt + 1)) // Sửa lỗi type casting
+            }
         }
     }
 
-    // Collect với timeout
-    withTimeoutOrNull(350) {
-        flow.collect { value ->
-            println("Received: $value")
+    throw lastException ?: RuntimeException("Retry failed")
+}
+
+inline fun <T> measureTime(
+    operation: String,
+    block: () -> T
+): T {
+    val startTime = System.currentTimeMillis()
+    val result = block()
+    val endTime = System.currentTimeMillis()
+    println("⏱️ $operation: ${endTime - startTime}ms")
+    return result
+}
+
+// Bỏ inline cho function không có lambda parameters để tránh warning
+fun <T> validate(
+    value: T,
+    vararg validators: (T) -> Boolean,
+    onError: (String) -> Unit = { println("❌ Lỗi: $it") }
+): Boolean {
+    validators.forEachIndexed { index, validator ->
+        if (!validator(value)) {
+            onError("Validation failed at step ${index + 1}")
+            return false
+        }
+    }
+    return true
+}
+
+fun performanceDemo() {
+    println("\n📊 === PERFORMANCE COMPARISON ===")
+
+    val iterations = 1_000_000
+
+    val normalTime = measureTimeMillis {
+        repeat(iterations) {
+            normalFunction { /* empty */ }
         }
     }
 
-    // Structured concurrency
-    coroutineScope {
-        launch {
-            delay(200)
-            println("Task 1 completed")
+    val inlineTime = measureTimeMillis {
+        repeat(iterations) {
+            inlineFunction { /* empty */ }
         }
-
-        launch {
-            delay(100)
-            println("Task 2 completed")
-        }
-
-        println("Waiting for all tasks to complete...")
     }
 
-    println("All tasks completed")
+    println("🔄 Normal function: ${normalTime}ms")
+    println("⚡ Inline function: ${inlineTime}ms")
+    println("🚀 Cải thiện: ${if (normalTime > 0) ((normalTime - inlineTime) * 100 / normalTime) else 0}%")
+}
+
+fun returnBehaviorDemo() {
+    println("\n🔄 === RETURN BEHAVIOR DEMO ===")
+
+    fun testInlineReturn() {
+        println("🎯 Trước khi gọi inline function")
+        executeWithLog {
+            println("📝 Trong inline function")
+            return
+        }
+        println("❌ Dòng này sẽ KHÔNG được thực hiện")
+    }
+
+    fun testCrossinlineReturn() {
+        println("🎯 Test crossinline function")
+        executeAsync {
+            println("📝 Trong crossinline function")
+        }
+        println("✅ Dòng này VẪN được thực hiện")
+        Thread.sleep(100)
+    }
+
+    testInlineReturn()
+    testCrossinlineReturn()
 }
